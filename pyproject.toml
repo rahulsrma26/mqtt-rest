@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-rest"
-version = "0.1.1"
+version = "0.1.2"
 description = "A REST API for MQTT Client Management"
 packages = [
     {include = "mqtt_rest", from = "."},
@@ -37,6 +37,7 @@ toml = "^0.10.2"
 ruff = "^0.6.8"
 pytest = "^8.3.3"
 pytest-mock = "^3.14.0"
+pre-commit = "^3.8.0"
 
 [build-system]
 requires = ["poetry-core"]

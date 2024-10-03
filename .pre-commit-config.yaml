@@ -1,0 +1,28 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: check-merge-conflict
+    -   id: check-toml
+    -   id: mixed-line-ending
+    -   id: check-ast
+    -   id: check-added-large-files
+-   repo: https://github.com/python-poetry/poetry
+    rev: v1.8.3
+    hooks:
+    -   id: poetry-check
+-   repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: poetry run ruff check
+        language: system
+        types: [python]
+      - id: pytest
+        name: pytest
+        entry: poetry run pytest
+        language: system
+        types: [python]
