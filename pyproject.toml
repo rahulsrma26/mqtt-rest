@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "mqtt-rest"
+version = "0.1.0"
+description = "A REST API for MQTT Client Management"
+packages = [
+    {include = "mqtt_rest", from = "."},
+]
+authors = [
+    "Rahul Sharma <rahulsrma26@gmail.com>",
+]
+maintainers = [
+    "Rahul Sharma <rahulsrma26@gmail.com>",
+]
+license = "MIT"
+repository = "https://github.com/rahulsrma26/mqtt-rest"
+readme = "README.md"
+keywords = [
+    "MQTT",
+    "REST",
+    "API",
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = "^0.31.0"
+paho-mqtt = "^2.1.0"
+toml = "^0.10.2"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.3"
+pytest-mock = "^3.14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+run = "mqtt_rest.run:main"

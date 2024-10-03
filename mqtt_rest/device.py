@@ -1,0 +1,209 @@
+import abc
+import time
+import logging
+from typing import Optional, Dict, Any, Union, Iterable, Tuple
+from pydantic import BaseModel, Field
+from mqtt_rest.configs import SERVER_CONFIG as CONFIG
+from mqtt_rest.utils import get_unique_id
+from mqtt_rest.mqtt import MQTT
+
+logger = logging.getLogger("uvicorn.error")
+
+REGISTER_DELAY = 0.2
+
+
+class BaseSensor(BaseModel, abc.ABC):
+    name: str
+    unique_id: str = Field(serialization_alias="uniq_id")
+    bulk_udpate: bool = Field(exclude=True)
+    expire_after: Optional[int] = Field(default=None, serialization_alias="exp_aft")
+
+    @abc.abstractmethod
+    def get_config(self):
+        pass
+
+    def append_optional(self, dump: dict) -> dict:
+        if self.bulk_udpate:
+            dump["val_tpl"] = f"{{{{ value_json.{self.unique_id} }}}}"
+        return dump
+
+    @property
+    def config_topic(self) -> str:
+        component = "binary_sensor" if isinstance(self, BinarySensor) else "sensor"
+        return f"homeassistant/{component}/{self.unique_id}/config"
+
+    def get_state_topic(self, device_id: str) -> str:
+        if self.bulk_udpate:
+            return f"{CONFIG.app_name}/{device_id}/state"
+        return f"{CONFIG.app_name}/{self.unique_id}/state"
+
+    def send_add(self, device_info: dict):
+        device_id = device_info["ids"]
+        config = self.get_config()
+        config["stat_t"] = self.get_state_topic(device_id)
+        config["dev"] = device_info
+        MQTT.publish(topic=self.config_topic, payload=config)
+
+    def send_remove(self):
+        MQTT.publish(topic=self.config_topic)
+
+
+class BinarySensor(BaseSensor):
+    value: bool = Field(exclude=True)
+    device_class: Optional[str] = Field(default=None, serialization_alias="dev_cla")
+    enabled_by_default: Optional[bool] = Field(default=None, serialization_alias="en")
+
+    def get_config(self):
+        return self.append_optional(self.model_dump(exclude_none=True, by_alias=True))
+
+
+class ValueSensor(BaseSensor):
+    value: Union[int, float] = Field(exclude=True)
+    device_class: Optional[str] = Field(default=None, serialization_alias="dev_cla")
+    unit: Optional[str] = Field(default=None, serialization_alias="unit_of_meas")
+    state_class: Optional[str] = Field(default=None, serialization_alias="stat_cla")
+
+    def get_config(self):
+        return self.append_optional(self.model_dump(exclude_none=True, by_alias=True))
+
+
+# class EnumSensor(BaseSensor):
+#     value: str = Field(exclude=True)
+#     options: list[str] = Field(serialization_alias="ops")
+
+#     def get_config(self):
+#         result = self.model_dump(exclude_none=True, by_alias=True)
+#         result["dev_cla"] = "enum"
+#         return result
+
+
+class DiagnosticSensor(BaseSensor):
+    value: str = Field(exclude=True)
+
+    def get_config(self):
+        result = self.append_optional(self.model_dump(exclude_none=True, by_alias=True))
+        result["ent_cat"] = "diagnostic"
+        return result
+
+
+class Device:
+    def __init__(
+        self,
+        name: str,
+        model: Optional[str] = None,
+        configuration_url: Optional[str] = None,
+        via_device: Optional[str] = None,
+        expire_after: Optional[int] = None,
+    ):
+        self.name = name
+        self.id = get_unique_id(name)
+        self.model = model or "generic"
+        self.configuration_url = configuration_url
+        self.via_device = via_device
+        self.expire_after = expire_after
+        self.discovered = False
+        self.sensors = {}
+
+    def get_config(self):
+        dump = {
+            "name": self.name,
+            "id": self.id,
+            "model": self.model,
+            "discovered": self.discovered,
+        }
+        if self.configuration_url:
+            dump["configuration_url"] = self.configuration_url
+        if self.via_device:
+            dump["via_device"] = self.via_device
+        if self.expire_after:
+            dump["expire_after"] = self.expire_after
+        dump["sensors"] = {
+            name: sensor.get_config() for name, sensor in self.sensors.items()
+        }
+        return dump
+
+    def _create_sensor(self, name: str, value: Any, bulk: bool, **kwargs) -> BaseSensor:
+        kwargs["name"] = name
+        kwargs["unique_id"] = get_unique_id(self.id + name)
+        kwargs["bulk_udpate"] = bulk
+        kwargs["value"] = value
+        if self.expire_after:
+            kwargs["expire_after"] = self.expire_after
+        if isinstance(value, bool):
+            return BinarySensor(**kwargs)
+        if isinstance(value, (int, float)):
+            return ValueSensor(**kwargs)
+        kwargs["value"] = str(value)
+        return DiagnosticSensor(**kwargs)
+
+    def _get_device_info(self):
+        if self.discovered:
+            return {"ids": self.id}
+        self.discovered = True
+        info = {
+            "name": self.name,
+            "mdl": self.model,
+            "mf": CONFIG.app_name,
+            "sw": CONFIG.app_version,
+            "ids": self.id,
+        }
+        if self.configuration_url:
+            info["cu"] = self.configuration_url
+        if self.via_device:
+            info["via_device"] = self.via_device
+        return info
+
+    def remove_sensor(self, name: str):
+        logger.info(f"Removing sensor {name}")
+        if sensor := self.sensors.pop(name):
+            sensor.send_remove()
+
+    def get_sensor(self, name: str, value: Any, bulk: bool) -> Tuple[BaseSensor, bool]:
+        if sensor := self.sensors.get(name):
+            if type(sensor.value) != type(value):
+                logger.warning(
+                    f"Sensor {name} value type changed from {type(sensor.value)} to {type(value)}"
+                )
+                self.remove_sensor(name)
+            elif sensor.bulk_udpate != bulk:
+                logger.warning(
+                    f"Sensor {name} bulk update changed from {sensor.bulk_udpate} to {bulk}"
+                )
+                self.remove_sensor(name)
+            else:
+                return sensor, False
+
+        logger.info(f"Registering sensor {name}")
+        sensor = self._create_sensor(name, value, bulk)
+        self.sensors[name] = sensor
+        sensor.send_add(self._get_device_info())
+        return sensor, True
+
+    def update(self, name: str, value: Any):
+        sensor, registered = self.get_sensor(name, value, bulk=False)
+        if registered:
+            time.sleep(REGISTER_DELAY)
+        if isinstance(value, bool):
+            value = "ON" if value else "OFF"
+        MQTT.publish(topic=sensor.get_state_topic(self.id), payload=value)
+
+    def bulk_update(self, data: Dict[str, Any]):
+        values, topic, registered = {}, None, False
+        for name, value in data.items():
+            sensor, reg = self.get_sensor(name, value, bulk=True)
+            registered = registered or reg
+            if not topic:
+                topic = sensor.get_state_topic(self.id)
+            if isinstance(value, bool):
+                value = "ON" if value else "OFF"
+            values[sensor.unique_id] = value
+        if topic:
+            if registered:
+                time.sleep(REGISTER_DELAY)
+            MQTT.publish(topic=topic, payload=values)
+
+    def bulk_remove(self, names: Optional[Iterable[str]] = None):
+        if not names:
+            names = list(self.sensors.keys())
+        for name in names:
+            self.remove_sensor(name)
