@@ -68,7 +68,7 @@ def msg_helper(
 
 
 @pytest.mark.parametrize("value,component,expected", test_single_sensor)
-@mock.patch(f"mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
+@mock.patch("mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
 def test_single_sensor(value, component, expected):
     MockedMQTT.calls = []
     dev = Device(name="test-device")
@@ -84,7 +84,7 @@ def test_single_sensor(value, component, expected):
     assert id == nid, "ID changed after remove"
 
 
-@mock.patch(f"mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
+@mock.patch("mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
 def test_multiple_sensors():
     MockedMQTT.calls = []
     dev = Device(name="test-device")

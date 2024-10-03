@@ -117,9 +117,7 @@ class Device:
             dump["via_device"] = self.via_device
         if self.expire_after:
             dump["expire_after"] = self.expire_after
-        dump["sensors"] = {
-            name: sensor.get_config() for name, sensor in self.sensors.items()
-        }
+        dump["sensors"] = {name: sensor.get_config() for name, sensor in self.sensors.items()}
         return dump
 
     def _create_sensor(self, name: str, value: Any, bulk: bool, **kwargs) -> BaseSensor:
@@ -160,7 +158,7 @@ class Device:
 
     def get_sensor(self, name: str, value: Any, bulk: bool) -> Tuple[BaseSensor, bool]:
         if sensor := self.sensors.get(name):
-            if type(sensor.value) != type(value):
+            if not isinstance(sensor.value, type(value)):
                 logger.warning(
                     f"Sensor {name} value type changed from {type(sensor.value)} to {type(value)}"
                 )

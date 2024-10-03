@@ -1,7 +1,11 @@
 .env.dev
+.pytest_cache/
+.ruff_cache/
+dist/
 __pycache__/
 cache/
 tmp/
+
 
 # Editor directories and files
 .vscode/*
