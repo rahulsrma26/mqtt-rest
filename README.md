@@ -46,7 +46,7 @@ Check if everything runs:
 poetry run pre-commit run --all-files
 ```
 
-Note: sometimes it may fail due to PyPI cache please clear before run then.
+Note: The process may occasionally fail due to caching issues with PyPI. If this happens, please clear the cache before trying again.
 
 ```sh
 poetry cache clear PyPI --all
