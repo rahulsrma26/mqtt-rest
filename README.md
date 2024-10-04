@@ -1,3 +1,5 @@
+[![CI](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/test.yml/badge.svg)](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/test.yml)
+
 # MQTT-REST
 
 MQTT-REST is a project that bridges MQTT and RESTful APIs, allowing seamless communication between IoT devices using MQTT and web services using REST.
@@ -28,4 +30,24 @@ poetry run pytest
 
 ```sh
 poetry run ruff check
+```
+
+## Contributing
+
+Install pre-commit
+
+```sh
+poetry run pre-commit install
+```
+
+Check if everything runs:
+
+```sh
+poetry run pre-commit run --all-files
+```
+
+Note: sometimes it may fail due to PyPI cache please clear before run then.
+
+```sh
+poetry cache clear PyPI --all
 ```
