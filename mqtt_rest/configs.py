@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Callable, Any, Union
 from pydantic import BaseModel, ConfigDict, computed_field
 from mqtt_rest.utils import get_unique_id, get_internal_ip
 from mqtt_rest import __app_name__, __version__
@@ -29,11 +30,21 @@ class ServerConfig(BaseModel):
         }
 
 
+def get_env(name: str, defaut: Union[Any, Callable[[], Optional[Any]]]) -> Any:
+    ip = os.environ.get(name)
+    if not ip:
+        if callable(defaut):
+            ip = defaut()
+        else:
+            ip = defaut
+    return ip
+
+
 SERVER_CONFIG = ServerConfig(
     app_name=__app_name__,
     app_version=__version__,
-    ip=os.environ.get("SERVER_IP", get_internal_ip()),
-    port=os.environ.get("SERVER_PORT", 9000),
+    ip=get_env("SERVER_IP", get_internal_ip),
+    port=get_env("SERVER_PORT", 9000),
 )
 
 
@@ -45,8 +56,8 @@ class MQTTConfig(BaseModel):
 
 
 MQTT_CONFIG = MQTTConfig(
-    broker_ip=os.environ.get("BROKER_IP", "localhost"),
-    broker_port=os.environ.get("BROKER_PORT", 1883),
-    user=os.environ.get("MQTT_USER", "admin"),
-    password=os.environ.get("MQTT_PASS", ""),
+    broker_ip=get_env("BROKER_IP", "localhost"),
+    broker_port=get_env("BROKER_PORT", 1883),
+    user=get_env("MQTT_USER", "admin"),
+    password=get_env("MQTT_PASS", ""),
 )

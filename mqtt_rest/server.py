@@ -3,10 +3,12 @@ from typing import Dict, Union
 from threading import Lock
 from fastapi import FastAPI, HTTPException, Body
 from mqtt_rest import db
+from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("Visit the API at", CONFIG.url + "/docs")
     db.add_source_device()
     yield
     print("Cleaning up devices")

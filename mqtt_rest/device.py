@@ -96,8 +96,8 @@ class Device:
         expire_after: Optional[int] = None,
     ):
         self.name = name
-        self.id = get_unique_id(name)
         self.model = model or "generic"
+        self.id = get_unique_id(self.name + self.model)
         self.configuration_url = configuration_url
         self.via_device = via_device
         self.expire_after = expire_after
@@ -152,7 +152,7 @@ class Device:
         return info
 
     def remove_sensor(self, name: str):
-        logger.info(f"Removing sensor {name}")
+        logger.info(f"Removing sensor {name} ({self.name})")
         if sensor := self.sensors.pop(name):
             sensor.send_remove()
 
@@ -160,18 +160,18 @@ class Device:
         if sensor := self.sensors.get(name):
             if not isinstance(sensor.value, type(value)):
                 logger.warning(
-                    f"Sensor {name} value type changed from {type(sensor.value)} to {type(value)}"
+                    f"Sensor {name} ({self.name}) value type changed from {type(sensor.value)} to {type(value)}"
                 )
                 self.remove_sensor(name)
             elif sensor.bulk_udpate != bulk:
                 logger.warning(
-                    f"Sensor {name} bulk update changed from {sensor.bulk_udpate} to {bulk}"
+                    f"Sensor {name} ({self.name}) bulk update changed from {sensor.bulk_udpate} to {bulk}"
                 )
                 self.remove_sensor(name)
             else:
                 return sensor, False
 
-        logger.info(f"Registering sensor {name}")
+        logger.info(f"Registering sensor {name} ({self.name})")
         sensor = self._create_sensor(name, value, bulk)
         self.sensors[name] = sensor
         sensor.send_add(self._get_device_info())

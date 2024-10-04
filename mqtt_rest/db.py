@@ -11,7 +11,7 @@ def add_source_device():
     global SOURCE_DEVICE, SOURCE_DEVICE_NAME, all_devices
     SOURCE_DEVICE = Device(
         name=CONFIG.app_name,
-        model="Server",
+        model=f"Server ({CONFIG.ip}:{CONFIG.port})",
         configuration_url=CONFIG.url + "/docs",
     )
     SOURCE_DEVICE.update(SOURCE_DEVICE_NAME, value=len(all_devices))
