@@ -11,16 +11,8 @@ defaults:
     shell: bash
 
 jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.1
-
-  python-check:
+  tests:
     name: Python Check
-    needs: pre-commit
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +40,9 @@ jobs:
           poetry check --no-interaction
           poetry config virtualenvs.in-project true
           poetry install --no-interaction
+      - name: Run linting
+        run: |
+          poetry run ruff check
       - name: Run tests
         run: |
           poetry run pytest -v
