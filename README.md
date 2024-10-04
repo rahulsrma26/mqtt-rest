@@ -1,4 +1,4 @@
-[![CI](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/test.yml/badge.svg)](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/test.yml)
+[![build](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rahulsrma26/mqtt-rest/actions/workflows/build.yml)
 
 # MQTT-REST
 
