@@ -1,16 +1,15 @@
 from typing import Union, Any, Tuple
-from unittest import mock
 import pytest
 from mqtt_rest.device import Device
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 
 
-class MockedMQTT:
-    calls = []
+class MockedMQTTBroker:
+    def __init__(self) -> None:
+        self.calls = []
 
-    @staticmethod
-    def publish(topic: str, payload: Union[str, dict] = "", *args, **kwargs):
-        MockedMQTT.calls.append((topic, payload))
+    def publish(self, topic: str, payload: Union[str, dict] = "", *args, **kwargs):
+        self.calls.append((topic, payload))
 
 
 test_single_sensor = [
@@ -68,13 +67,13 @@ def msg_helper(
 
 
 @pytest.mark.parametrize("value,component,expected", test_single_sensor)
-@mock.patch("mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
-def test_single_sensor(value, component, expected):
-    MockedMQTT.calls = []
+def test_single_sensor(mocker, value, component, expected):
+    client = MockedMQTTBroker()
+    mocker.patch("mqtt_rest.device.mqttclient", client)
     dev = Device(name="test-device")
     dev.update("test-sensor", value)
     dev.remove_sensor("test-sensor")
-    calls = MockedMQTT.calls
+    calls = client.calls
     assert len(calls) == 3
     id, _ = msg_helper(calls[0], "test-device", "test-sensor", component, first=True)
     topic, msg = calls[1]
@@ -84,9 +83,9 @@ def test_single_sensor(value, component, expected):
     assert id == nid, "ID changed after remove"
 
 
-@mock.patch("mqtt_rest.device.MQTT.publish", MockedMQTT.publish)
-def test_multiple_sensors():
-    MockedMQTT.calls = []
+def test_multiple_sensors(mocker):
+    client = MockedMQTTBroker()
+    mocker.patch("mqtt_rest.device.mqttclient", client)
     dev = Device(name="test-device")
     sensors = {
         "sensor-1": True,
@@ -98,7 +97,7 @@ def test_multiple_sensors():
     }
     dev.bulk_update(sensors)
     dev.bulk_remove()
-    calls = MockedMQTT.calls
+    calls = client.calls
     assert len(calls) == 6 + 1 + 6
     dev_id = None
     msg = {}

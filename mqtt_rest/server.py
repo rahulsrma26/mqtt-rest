@@ -5,17 +5,23 @@ from fastapi import FastAPI, HTTPException, Body
 from mqtt_rest import db
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 from mqtt_rest.plugins import all_plugins
+from mqtt_rest.mqtt import MQTTBroker
+
+mqttclient = MQTTBroker()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Visit the API at", CONFIG.url + "/docs")
+    if not mqttclient.connect():
+        raise Exception("Failed to connect to MQTT Broker")
     db.add_source_device()
     yield
     print("Cleaning up devices")
     for device in db.all_devices.values():
         device.bulk_remove()
     db.remove_source_device()
+    mqttclient.disconnect()
 
 
 app = FastAPI(lifespan=lifespan)

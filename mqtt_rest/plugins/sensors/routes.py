@@ -47,7 +47,9 @@ async def submit(request: Request, name: str, expiry: int = 3600):
         )
         for key, value in values.items():
             device.get_sensor(key, value, bulk=True, unit="°C")
+        device.get_sensor("ip", "detecting...", bulk=False)
     device.bulk_update(values)
+    device.update("ip", str(request.client.host))
 
 
 @router.delete("/delete/{name}")

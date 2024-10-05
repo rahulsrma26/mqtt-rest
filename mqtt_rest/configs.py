@@ -53,6 +53,7 @@ class MQTTConfig(BaseModel):
     broker_port: int
     user: str
     password: str
+    enable_logger: bool
 
 
 MQTT_CONFIG = MQTTConfig(
@@ -60,4 +61,5 @@ MQTT_CONFIG = MQTTConfig(
     broker_port=get_env("BROKER_PORT", 1883),
     user=get_env("MQTT_USER", "admin"),
     password=get_env("MQTT_PASS", ""),
+    enable_logger=get_env("MQTT_LOG", "F").upper()[0] == "T",
 )

@@ -5,11 +5,10 @@ from typing import Optional, Dict, Any, Union, Iterable
 from pydantic import BaseModel, Field
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 from mqtt_rest.utils import get_unique_id
-from mqtt_rest.mqtt import MQTT
+from mqtt_rest.mqtt import MQTTBroker, PROCESSING_DELAY
 
 logger = logging.getLogger("uvicorn.error")
-
-REGISTER_DELAY = 0.1
+mqttclient = MQTTBroker()
 
 
 class BaseSensor(BaseModel, abc.ABC):
@@ -17,6 +16,7 @@ class BaseSensor(BaseModel, abc.ABC):
     unique_id: str = Field(serialization_alias="uniq_id")
     bulk_udpate: bool = Field(exclude=True)
     expire_after: Optional[int] = Field(default=None, serialization_alias="exp_aft")
+    register_time: Optional[float] = Field(default=None, exclude=True)
 
     @abc.abstractmethod
     def get_config(self):
@@ -37,17 +37,27 @@ class BaseSensor(BaseModel, abc.ABC):
             return f"{CONFIG.app_name}/{device_id}/state"
         return f"{CONFIG.app_name}/{self.unique_id}/state"
 
+    def wait_for_register(self):
+        if self.register_time:
+            remaining = PROCESSING_DELAY - (time.time() - self.register_time)
+            if remaining > 0:
+                time.sleep(remaining)
+
     def send_add(self, device_info: dict):
         device_id = device_info["ids"]
         config = self.get_config()
         config["stat_t"] = self.get_state_topic(device_id)
         config["dev"] = device_info
-        MQTT.publish(topic=self.config_topic, payload=config)
-        time.sleep(REGISTER_DELAY)
+        # MQTT.publish(topic=self.config_topic, payload=config)
+        self.wait_for_register()
+        mqttclient.publish(topic=self.config_topic, payload=config)
+        self.register_time = time.time()
 
     def send_remove(self):
-        MQTT.publish(topic=self.config_topic)
-        time.sleep(REGISTER_DELAY)
+        # MQTT.publish(topic=self.config_topic)
+        self.wait_for_register()
+        mqttclient.publish(topic=self.config_topic)
+        self.register_time = time.time()
 
 
 class BinarySensor(BaseSensor):
@@ -183,19 +193,26 @@ class Device:
         sensor = self.get_sensor(name, value, bulk=False)
         if isinstance(value, bool):
             value = "ON" if value else "OFF"
-        MQTT.publish(topic=sensor.get_state_topic(self.id), payload=value)
+        # MQTT.publish(topic=sensor.get_state_topic(self.id), payload=value)
+        sensor.wait_for_register()
+        mqttclient.publish(topic=sensor.get_state_topic(self.id), payload=value)
 
     def bulk_update(self, data: Dict[str, Any]):
-        values, topic = {}, None
+        values, topic, newest = {}, None, 0.0
         for name, value in data.items():
             sensor = self.get_sensor(name, value, bulk=True)
+            newest = max(newest, sensor.register_time or 0)
             if not topic:
                 topic = sensor.get_state_topic(self.id)
             if isinstance(value, bool):
                 value = "ON" if value else "OFF"
             values[sensor.unique_id] = value
         if topic:
-            MQTT.publish(topic=topic, payload=values)
+            # MQTT.publish(topic=topic, payload=values)
+            remaining = PROCESSING_DELAY - (time.time() - newest)
+            if remaining > 0:
+                time.sleep(remaining)
+            mqttclient.publish(topic=topic, payload=values)
 
     def bulk_remove(self, names: Optional[Iterable[str]] = None):
         if not names:
