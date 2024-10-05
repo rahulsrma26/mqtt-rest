@@ -10,7 +10,7 @@ logger = logging.getLogger("uvicorn.error")
 
 class MQTT:
     @staticmethod
-    def publish(topic: str, payload: Union[str, dict] = "", retain: bool = False, qos: int = 0):
+    def publish(topic: str, payload: Union[str, dict] = "", retain: bool = False, qos: int = 1):
         logger.debug(f"Publishing to {topic} (retain={retain}, qos={qos})")
         if isinstance(payload, dict):
             payload = json.dumps(payload)

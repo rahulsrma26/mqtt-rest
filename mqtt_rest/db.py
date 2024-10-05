@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 from mqtt_rest.device import Device
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
@@ -5,6 +6,8 @@ from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 SOURCE_DEVICE = None
 SOURCE_DEVICE_NAME = "devices"
 all_devices = {}
+
+logger = logging.getLogger("uvicorn.error")
 
 
 def add_source_device():
@@ -26,6 +29,7 @@ def remove_source_device():
 def add_device(*args, **kwargs) -> Device:
     global SOURCE_DEVICE, SOURCE_DEVICE_NAME, all_devices
     kwargs["via_device"] = SOURCE_DEVICE.id
+    logger.info(f"Adding device {kwargs['name']}")
     device = Device(*args, **kwargs)
     all_devices[device.name] = device
     SOURCE_DEVICE.update(SOURCE_DEVICE_NAME, value=len(all_devices))
@@ -38,15 +42,13 @@ def get_device(name: str, create: bool = True) -> Optional[Device]:
         return all_devices[name]
     if not create:
         return None
-    device = Device(name=name, via_device=SOURCE_DEVICE.id)
-    all_devices[name] = device
-    SOURCE_DEVICE.update(SOURCE_DEVICE_NAME, value=len(all_devices))
-    return device
+    return add_device(name=name)
 
 
 def remove_device(name: str):
     global SOURCE_DEVICE, SOURCE_DEVICE_NAME, all_devices
     device = all_devices.pop(name, None)
     if device:
+        logger.info(f"Removing device {name}")
         device.bulk_remove()
         SOURCE_DEVICE.update(SOURCE_DEVICE_NAME, value=len(all_devices))

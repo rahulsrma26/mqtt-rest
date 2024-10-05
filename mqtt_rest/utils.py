@@ -11,10 +11,10 @@ def get_internal_ip():
 
 
 def get_unique_id(text: str) -> str:
-    return (
+    return "_" + (
         base64.b64encode(hashlib.md5(text.encode()).digest())
         .decode()
         .replace("=", "")
         .replace("/", "_")
-        .replace("+", "-")
+        .replace("+", "")
     )
