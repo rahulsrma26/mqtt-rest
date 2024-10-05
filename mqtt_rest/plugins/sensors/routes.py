@@ -11,6 +11,11 @@ router = APIRouter(prefix=f"/{PLUGIN_NAME}")
 last_report = {}
 
 
+def get_device_name(name: str):
+    name = name.replace(" ", "_")
+    return f"{name} {PLUGIN_NAME}"
+
+
 @router.get("/install")
 async def get_install(request: Request):
     return helper_templates.TemplateResponse(
@@ -25,30 +30,34 @@ async def get_manager(request: Request):
     )
 
 
-@router.put("/submit/{device_name}")
-async def submit(request: Request, device_name: str, expiry: int = 3600):
+@router.put("/submit/{name}")
+async def submit(request: Request, name: str, expiry: int = 3600):
     global last_report
+    device_name = get_device_name(name)
     last_report[device_name] = (await request.body()).decode()
     values = parse_sensors(last_report[device_name])
     device = get_device(device_name, create=False)
     if not device:
         configuration_url = str(request.url).replace("/submit/", "/report/")
         device = add_device(
-            name=f"{device_name}-{PLUGIN_NAME}",
+            name=device_name,
             model="mqtt-plugin",
             configuration_url=configuration_url,
             expire_after=expiry,
         )
+        for key, value in values.items():
+            device.get_sensor(key, value, bulk=True, unit="°C")
     device.bulk_update(values)
 
 
-@router.delete("/delete/{device_name}")
-async def delete(device_name: str):
+@router.delete("/delete/{name}")
+async def delete(name: str):
     global last_report
+    device_name = get_device_name(name)
     last_report.pop(device_name)
     remove_device(device_name)
 
 
-@router.get("/report/{device_name}", response_class=PlainTextResponse)
-async def report(device_name: str):
-    return last_report.get(device_name)
+@router.get("/report/{name}", response_class=PlainTextResponse)
+async def report(name: str):
+    return last_report.get(get_device_name(name))
