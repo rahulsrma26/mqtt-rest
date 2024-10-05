@@ -4,6 +4,7 @@ from threading import Lock
 from fastapi import FastAPI, HTTPException, Body
 from mqtt_rest import db
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
+from mqtt_rest.plugins import all_plugins
 
 
 @asynccontextmanager
@@ -19,6 +20,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 lock = Lock()
+for plugin in all_plugins.values():
+    app.include_router(plugin, prefix="/api/v1/plugins")
 
 # origins = "*"
 # app.add_middleware(
@@ -72,3 +75,8 @@ async def delete_sensor(device_name: str, sensor_name: str):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     device.remove_sensor(sensor_name)
+
+
+@app.get("/api/v1/plugins")
+async def get_plugins():
+    return list(all_plugins.keys())
