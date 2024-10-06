@@ -6,6 +6,41 @@ MQTT-REST is a project that bridges MQTT and RESTful APIs, allowing seamless com
 
 It's useful if you want to monitor arbritary stuff from a machine in Home-assistant without writing custom integration.
 
+## Installation
+
+```sh
+pip install mqtt-rest
+```
+
+## Running
+
+```sh
+mqtt-rest.run
+```
+
+## Docker
+
+Dockerhub repository for [mqtt-rest](https://hub.docker.com/r/welcometors/mqtt-rest).
+
+```sh
+docker pull welcometors/mqtt-rest:latest
+```
+
+```sh
+docker run --env-file vars.env -p 9000:9000 welcometors/mqtt-rest:latest
+```
+
+where `.env` file can provide a convenient way to change environment variables:
+
+```env
+BROKER_IP=<mqtt-broker-ip>
+BROKER_PORT=<mqtt-broker-port>  # defaults to 1883
+MQTT_USER=<mqtt-user-name>
+MQTT_PASS=<mqtt-password>
+SERVER_LOG_LEVEL=info  # uvicorn log level
+MQTT_LOG=False  # enable's logging by mqtt client
+```
+
 ## Development
 
 ```sh
