@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-rest"
-version = "0.4.0"
+version = "0.4.1"
 description = "A REST API for MQTT Client Management"
 packages = [
     {include = "mqtt_rest", from = "."},
@@ -45,7 +45,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-run = "mqtt_rest.run:main"
+mqtt-rest-server = "mqtt_rest.run:main"
 
 [tool.ruff]
 line-length = 100
