@@ -7,7 +7,7 @@ CRON_COMMAND=$(realpath "$0")
 
 # Function to display the help message
 show_help() {
-    echo "Usage: $0 [-a frequency] [-r] [-s] [-h]"
+    echo "Usage: $0 [-a frequency] [-r] [-e] [-s] [-h]"
     echo
     echo "Options:"
     echo "  -a  Add/Update cron job with <frequency> (Default: 1h)"

@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from mqtt_rest.plugins.helper import helper_templates
+from mqtt_rest.plugins.helper import get_installer, get_single_job
 from mqtt_rest.plugins.sensors.parser import parse_sensors
 from mqtt_rest.db import add_device, get_device, remove_device
 
@@ -18,16 +18,12 @@ def get_device_name(name: str):
 
 @router.get("/install")
 async def get_install(request: Request):
-    return helper_templates.TemplateResponse(
-        "install.sh", {"request": request, "dependencies": "sensors"}
-    )
+    return get_installer(request, "sensors")
 
 
 @router.get("/manager")
 async def get_manager(request: Request):
-    return helper_templates.TemplateResponse(
-        "single_job.sh", {"request": request, "data_command": "sensors"}
-    )
+    return get_single_job(request, "sensors")
 
 
 @router.put("/submit/{name}")
