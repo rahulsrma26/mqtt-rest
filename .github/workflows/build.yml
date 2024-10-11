@@ -5,9 +5,11 @@ on:
     branches:
       - main
     paths:
-      - '**'
-      - '!README.md'
-      - '!.gitignore'
+      - 'mqtt_rest/**'
+      - 'tests/**'
+      - '.pre-commit-config.yaml'
+      - 'poetry.lock'
+      - 'pyproject.toml'
 
 defaults:
   run:
