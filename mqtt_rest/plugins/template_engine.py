@@ -7,6 +7,8 @@ class TemplateEngine:
         self.dir_path = dir_path
         self.env = Environment(
             loader=FileSystemLoader(dir_path),
+            variable_start_string="'{{",
+            variable_end_string="}}'",
             comment_start_string="{#=%",
             comment_end_string="%=#}",
         )

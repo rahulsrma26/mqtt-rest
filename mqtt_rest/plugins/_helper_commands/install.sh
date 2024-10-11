@@ -1,11 +1,11 @@
 #!/bin/bash
 
-COMMANDS_URL=$(dirname "{{request.url}}")
+COMMANDS_URL=$(dirname "'{{request.url}}'")
 PLUGIN_NAME=$(basename "$COMMANDS_URL")
 
 #{% if description %}
 cat << EOF
-{{ description }}
+'{{ description }}'
 EOF
 #{% endif %}
 
@@ -19,8 +19,8 @@ if [[ "$user_choice" == "no" || "$user_choice" == "n" ]]; then
 fi
 
 #{% if dependencies %}
-commands=({{ dependencies|join(', ', attribute='command') }})
-packages=({{ dependencies|join(', ', attribute='package') }})
+commands=('{{ dependencies|join(", ", attribute="command") }}')
+packages=('{{ dependencies|join(", ", attribute="package") }}')
 not_installed=()
 
 # Check if the dependencies are installed if not then add related package to not_installed array
@@ -45,8 +45,8 @@ fi
 PLUGIN_DIR="$HOME/mqtt-rest/${PLUGIN_NAME}"
 mkdir -p "${PLUGIN_DIR}"
 DOWNLOAD_LOCATION="${PLUGIN_DIR}/manager"
-wget -q -O "$DOWNLOAD_LOCATION" "${COMMANDS_URL}/manager"
-if [ $? -ne 0 ]; then
+if ! wget -q -O "$DOWNLOAD_LOCATION" "${COMMANDS_URL}/manager"
+then
     echo "Failed to download the manager for ${PLUGIN_NAME} plugin."
     exit 1
 fi

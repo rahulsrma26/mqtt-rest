@@ -1,8 +1,8 @@
 #!/bin/bash
 
-COMMANDS_URL=$(dirname "{{request.url}}")
+COMMANDS_URL=$(dirname "'{{request.url}}'")
 PLUGIN_NAME=$(basename "$(dirname "$COMMANDS_URL")")
-DATA_COMMAND="{{data_command}}"
+DATA_COMMAND="'{{data_command}}'"
 CRON_COMMAND=$(realpath "$0")
 
 # Function to display the help message
