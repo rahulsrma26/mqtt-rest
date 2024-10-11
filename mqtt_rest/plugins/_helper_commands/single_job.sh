@@ -19,19 +19,7 @@ show_help() {
     echo
 }
 
-get_cron_frequency() {
-    local frequency=$1
-    local unit=${frequency: -1}
-    local number=${frequency:0:${#frequency}-1}
-
-    case $unit in
-        m) echo "*/$number * * * *";;
-        h) echo "0 */$number * * *";;
-        d) echo "0 0 */$number * *";;
-        *) echo "Invalid frequency unit. Please use one of {m, h, d}."
-           exit 1 ;;
-    esac
-}
+# Function that return different frequency options '{{get_cron_frequency}}'
 
 # Default values for options
 FREQUENCY="1h"

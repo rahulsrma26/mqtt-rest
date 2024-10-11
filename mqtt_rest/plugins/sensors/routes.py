@@ -5,7 +5,8 @@ This module contains the routes for the sensors plugin.
 import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from mqtt_rest.plugins.helper import Command, get_installer, get_single_job
+from mqtt_rest.plugins.helper import JOB_FREQUENCY_MINUTE_HOUR_DAY
+from mqtt_rest.plugins.template_engine import Command, get_installer, get_single_job
 from mqtt_rest.plugins.sensors.parsers import parse_sensors
 from mqtt_rest.db import add_device, get_device, remove_device
 
@@ -33,7 +34,11 @@ async def get_install(request: Request):
 
 @router.get("/manager")
 async def get_manager(request: Request):
-    return get_single_job(request, data_command="sensors")
+    return get_single_job(
+        request,
+        data_command="sensors",
+        get_cron_frequency=JOB_FREQUENCY_MINUTE_HOUR_DAY,
+    )
 
 
 @router.put("/submit/{name}")
