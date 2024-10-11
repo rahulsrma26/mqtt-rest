@@ -1,8 +1,12 @@
+"""
+This module contains the routes for the sensors plugin.
+"""
+
 import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from mqtt_rest.plugins.helper import get_installer, get_single_job
-from mqtt_rest.plugins.sensors.parser import parse_sensors
+from mqtt_rest.plugins.helper import Command, get_installer, get_single_job
+from mqtt_rest.plugins.sensors.parsers import parse_sensors
 from mqtt_rest.db import add_device, get_device, remove_device
 
 PLUGIN_NAME = "sensors"
@@ -18,12 +22,18 @@ def get_device_name(name: str):
 
 @router.get("/install")
 async def get_install(request: Request):
-    return get_installer(request, "sensors")
+    return get_installer(
+        request,
+        dependencies=[Command(command="sensors", package="lm-sensors")],
+        description="""
+        This plugin uses the "sensors" command to get the temperature of the CPU and other sensors.
+        """,
+    )
 
 
 @router.get("/manager")
 async def get_manager(request: Request):
-    return get_single_job(request, "sensors")
+    return get_single_job(request, data_command="sensors")
 
 
 @router.put("/submit/{name}")
