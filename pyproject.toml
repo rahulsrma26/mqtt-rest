@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-rest"
-version = "0.5.1"
+version = "0.6.0"
 description = "A REST API for MQTT Client Management"
 packages = [
     {include = "mqtt_rest", from = "."},
@@ -49,6 +49,7 @@ mqtt-rest-server = "mqtt_rest.run:main"
 
 [tool.ruff]
 line-length = 100
+lint.select = ["I"]
 
 [tool.ruff.lint.isort]
 order-by-type = true

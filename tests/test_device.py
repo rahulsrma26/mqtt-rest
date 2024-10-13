@@ -1,7 +1,9 @@
-from typing import Union, Any, Tuple
+from typing import Any, Tuple, Union
+
 import pytest
-from mqtt_rest.device import Device
+
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
+from mqtt_rest.device import Device
 
 
 class MockedMQTTBroker:

@@ -1,6 +1,7 @@
-import os
 import importlib.metadata
+import os
 from pathlib import Path
+
 import toml
 
 PYPROJECT_TOML_FILE = Path(__file__).parent.parent / "pyproject.toml"

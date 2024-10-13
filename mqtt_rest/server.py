@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
-from typing import Dict, Union
 from threading import Lock
-from fastapi import FastAPI, HTTPException, Body
+from typing import Dict, Union
+
+from fastapi import Body, FastAPI, HTTPException
+
 from mqtt_rest import db
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
-from mqtt_rest.plugins import all_plugins
 from mqtt_rest.mqtt import MQTTBroker
+from mqtt_rest.plugins import all_plugins
 
 mqttclient = MQTTBroker()
 

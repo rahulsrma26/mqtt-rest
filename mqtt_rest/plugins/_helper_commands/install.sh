@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMMANDS_URL=$(dirname "'{{request.url}}'")
+COMMANDS_URL=$(dirname "'{{url}}'")
 PLUGIN_NAME=$(basename "$COMMANDS_URL")
 
 #{% if description %}
@@ -18,28 +18,31 @@ if [[ "$user_choice" == "no" || "$user_choice" == "n" ]]; then
     exit 0
 fi
 
-#{% if dependencies %}
-commands=('{{ dependencies|join(", ", attribute="command") }}')
-packages=('{{ dependencies|join(", ", attribute="package") }}')
-not_installed=()
-
-# Check if the dependencies are installed if not then add related package to not_installed array
-for command in "${commands[@]}"; do
-    if ! command -v "$command" &> /dev/null; then
-        not_installed+=("${packages[$(echo "${commands[@]}" | tr ' ' '\n' | grep -n "$command" | cut -d: -f1)]}")
+is_updated=0
+run_update_once() {
+    if [ $is_updated -eq 0 ]; then
+        apt update
+        is_updated=1
     fi
-done
+}
 
-if [ ${#not_installed[@]} -ne 0 ]; then
-    echo "The following dependencies are not installed: ${not_installed[*]}"
+#{% if dependencies %}
+#{% for dependency in dependencies %}
+# Check if '{{ dependency.command }}' is installed
+if ! command -v '{{ dependency.command }}' &> /dev/null; then
+    echo "The '{{ dependency.package }}' package is required to run this plugin."
     if [ "$EUID" -ne 0 ]; then
-        echo "Please run this script as root or install them before running."
+        echo "Please run this script as root or install the package before running."
         exit 1
     fi
-    echo "Installing the dependencies..."
-    apt update
-    apt install -y "${not_installed[@]}"
+    echo "Installing the '{{ dependency.package }}' package..."
+    run_update_once
+    apt install -y '{{ dependency.package }}'
+    #{% if dependency.post_install %}
+    # Function that run the post install commands '{{function(dependency.post_install, call_afterwards=True, indent=1)}}'
+    #{% endif %}
 fi
+#{% endfor %}
 #{% endif %}
 
 PLUGIN_DIR="$HOME/mqtt-rest/${PLUGIN_NAME}"

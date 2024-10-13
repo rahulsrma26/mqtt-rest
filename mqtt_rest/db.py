@@ -1,7 +1,8 @@
 import logging
 from typing import Optional
-from mqtt_rest.device import Device
+
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
+from mqtt_rest.device import Device
 
 SOURCE_DEVICE = None
 SOURCE_DEVICE_NAME = "devices"

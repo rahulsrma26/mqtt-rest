@@ -3,12 +3,19 @@ This module contains the routes for the sensors plugin.
 """
 
 import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from mqtt_rest.plugins.helper import JOB_FREQUENCY_MINUTE_HOUR_DAY
-from mqtt_rest.plugins.template_engine import Command, get_installer, get_single_job
-from mqtt_rest.plugins.sensors.parsers import parse_sensors
+
 from mqtt_rest.db import add_device, get_device, remove_device
+from mqtt_rest.plugins.helper import (
+    JOB_FREQUENCY_MINUTE_HOUR_DAY,
+    BashFunction,
+    Command,
+    Installer,
+    SingleJob,
+)
+from mqtt_rest.plugins.sensors.parsers import parse_sensors
 
 PLUGIN_NAME = "sensors"
 logger = logging.getLogger("uvicorn.error")
@@ -23,22 +30,27 @@ def get_device_name(name: str):
 
 @router.get("/install")
 async def get_install(request: Request):
-    return get_installer(
-        request,
+    return Installer(
+        url=str(request.url),
         dependencies=[Command(command="sensors", package="lm-sensors")],
         description="""
         This plugin uses the "sensors" command to get the temperature of the CPU and other sensors.
         """,
-    )
+    ).render()
 
 
 @router.get("/manager")
 async def get_manager(request: Request):
-    return get_single_job(
-        request,
-        data_command="sensors",
+    return SingleJob(
+        url=str(request.url),
+        run_job=BashFunction(
+            name="run_job",
+            body="""
+            sensors
+            """,
+        ),
         get_cron_frequency=JOB_FREQUENCY_MINUTE_HOUR_DAY,
-    )
+    ).render()
 
 
 @router.put("/submit/{name}")

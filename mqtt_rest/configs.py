@@ -1,8 +1,10 @@
 import os
-from typing import Optional, Callable, Any, Union
+from typing import Any, Callable, Optional, Union
+
 from pydantic import BaseModel, ConfigDict, computed_field
-from mqtt_rest.utils import get_unique_id, get_internal_ip
+
 from mqtt_rest import __app_name__, __version__
+from mqtt_rest.utils import get_internal_ip, get_unique_id
 
 
 class ServerConfig(BaseModel):

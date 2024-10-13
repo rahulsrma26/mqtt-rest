@@ -1,8 +1,9 @@
+import json
+import logging
 import time
 from threading import Lock
 from typing import Union
-import logging
-import json
+
 import paho.mqtt.client as mqtt
 
 from mqtt_rest.configs import MQTT_CONFIG, SERVER_CONFIG

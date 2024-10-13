@@ -1,8 +1,14 @@
 #!/bin/bash
 
-COMMANDS_URL=$(dirname "'{{request.url}}'")
+# {% if need_root %}
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+# {% endif %}
+
+COMMANDS_URL=$(dirname "'{{url}}'")
 PLUGIN_NAME=$(basename "$(dirname "$COMMANDS_URL")")
-DATA_COMMAND="'{{data_command}}'"
 CRON_COMMAND=$(realpath "$0")
 
 # Function to display the help message
@@ -19,7 +25,9 @@ show_help() {
     echo
 }
 
-# Function that return different frequency options '{{get_cron_frequency}}'
+# Function that return different frequency options '{{function(get_cron_frequency)}}'
+
+# Function that run the job '{{function(run_job)}}'
 
 # Default values for options
 FREQUENCY="1h"
@@ -51,9 +59,10 @@ fi
 
 # Check if the script is executed with -e flag
 if [[ $SEND_OUTPUT -eq 1 ]]; then
-    OUTPUT=$($DATA_COMMAND)
-    HOSTNAME=$(hostname)
-    curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/submit/$HOSTNAME"
+    OUTPUT=$(run_job)
+    NAME=$(hostname)
+    URL_ENCODED_NAME=$(echo "$NAME" | sed -e 's/ /%20/g' -e 's/[^a-zA-Z0-9._-]/%&/g')
+    curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/submit/$URL_ENCODED_NAME"
     exit 0
 fi
 
