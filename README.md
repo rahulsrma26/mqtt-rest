@@ -15,7 +15,7 @@ pip install mqtt-rest
 ## Running
 
 ```sh
-mqtt-rest.run
+mqtt-rest-server
 ```
 
 ## Docker
