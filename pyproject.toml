@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-rest"
-version = "0.6.0"
+version = "0.6.1"
 description = "A REST API for MQTT Client Management"
 packages = [
     {include = "mqtt_rest", from = "."},

@@ -19,8 +19,7 @@ helper_templates = TemplateEngine(
 
 class Command(BaseModel):
     command: str
-    package: str | None = None
-    post_install: BashFunction | None = None
+    install_func: BashFunction | None = None
 
 
 class Installer(BaseModel):
@@ -40,8 +39,8 @@ class Installer(BaseModel):
 
 class BaseJob(BaseModel, abc.ABC):
     url: str
-    run_job: BashFunction
-    get_cron_frequency: BashFunction
+    job_func: BashFunction
+    freq2cron_func: BashFunction
     need_root: bool = False
 
     @abc.abstractmethod
@@ -55,7 +54,7 @@ class SingleJob(BaseJob):
 
 
 class MultiJob(BaseJob):
-    get_job_options: BashFunction
+    job_options_func: BashFunction
 
     def render(self):
         return helper_templates.render("multi_job.sh", self.model_dump())
@@ -70,7 +69,6 @@ def get_cron_frequency(freq: str):
     if "d" in freq:
         options.append('d) echo "0 0 */$number * *";;')
     return BashFunction(
-        name="get_cron_frequency",
         body="""
         local frequency=$1
         local unit=${frequency: -1}
@@ -78,12 +76,13 @@ def get_cron_frequency(freq: str):
 
         case $unit in
             {% for option in options -%}
-            '{{ option }}'
+            '_{{ option }}_'
             {% endfor -%}
-            *) echo "Invalid frequency unit. Please use one of '{{valids}}'."
+            *) echo "Invalid frequency unit. Please use one of '_{{valids}}_'."
             exit 1 ;;
         esac
         """,
+        name="get_cron_frequency",
         context={"options": options, "valids": ",".join(freq)},
     )
 

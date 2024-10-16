@@ -28,11 +28,29 @@ def get_device_name(name: str):
     return f"{name} {PLUGIN_NAME}"
 
 
+def get_job_func() -> BashFunction:
+    return BashFunction(
+        body="""
+        sensors
+        """,
+        name="run_job",
+    )
+
+
 @router.get("/install")
 async def get_install(request: Request):
     return Installer(
         url=str(request.url),
-        dependencies=[Command(command="sensors", package="lm-sensors")],
+        dependencies=[
+            Command(
+                command="sensors",
+                install_func=BashFunction(
+                    body="""
+                    apt install -y lm-sensors
+                    """
+                ),
+            )
+        ],
         description="""
         This plugin uses the "sensors" command to get the temperature of the CPU and other sensors.
         """,
@@ -43,13 +61,8 @@ async def get_install(request: Request):
 async def get_manager(request: Request):
     return SingleJob(
         url=str(request.url),
-        run_job=BashFunction(
-            name="run_job",
-            body="""
-            sensors
-            """,
-        ),
-        get_cron_frequency=JOB_FREQUENCY_MINUTE_HOUR_DAY,
+        job_func=get_job_func(),
+        freq2cron_func=JOB_FREQUENCY_MINUTE_HOUR_DAY,
     ).render()
 
 

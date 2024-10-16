@@ -7,7 +7,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 # {% endif %}
 
-COMMANDS_URL=$(dirname "'{{url}}'")
+COMMANDS_URL=$(dirname "'_{{url}}_'")
 PLUGIN_NAME=$(basename "$(dirname "$COMMANDS_URL")")
 CRON_COMMAND=$(realpath "$0")
 
@@ -25,9 +25,9 @@ show_help() {
     echo
 }
 
-# Function that return different frequency options '{{function(get_cron_frequency)}}'
+# Function that return different frequency options '_{{function(freq2cron_func)}}_'
 
-# Function that run the job '{{function(run_job)}}'
+# Function that run the job '_{{function(job_func)}}_'
 
 # Default values for options
 FREQUENCY="1h"
@@ -59,14 +59,14 @@ fi
 
 # Check if the script is executed with -e flag
 if [[ $SEND_OUTPUT -eq 1 ]]; then
-    OUTPUT=$(run_job)
+    OUTPUT=$('_{{job_func.name}}_')
     NAME=$(hostname)
     URL_ENCODED_NAME=$(echo "$NAME" | sed -e 's/ /%20/g' -e 's/[^a-zA-Z0-9._-]/%&/g')
     curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/submit/$URL_ENCODED_NAME"
     exit 0
 fi
 
-CRON_FREQUENCY=$(get_cron_frequency "$FREQUENCY")
+CRON_FREQUENCY=$('_{{freq2cron_func.name}}_' "$FREQUENCY")
 
 # check if both -a and -r are set
 if [[ $CRON_ADD -eq 1 && $CRON_REMOVE -eq 1 ]]; then

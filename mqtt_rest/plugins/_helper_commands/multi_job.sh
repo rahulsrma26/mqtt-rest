@@ -8,7 +8,7 @@ fi
 # {% endif %}
 
 
-COMMANDS_URL=$(dirname "'{{url}}'")
+COMMANDS_URL=$(dirname "'_{{url}}_'")
 PLUGIN_NAME=$(basename "$(dirname "$COMMANDS_URL")")
 BASE_CRON_COMMAND=$(realpath "$0")
 
@@ -23,11 +23,11 @@ show_help() {
     echo
 }
 
-# Function that return different frequency options '{{function(get_cron_frequency)}}'
+# Function that return different frequency options '_{{function(freq2cron_func)}}_'
 
-# Function that return different job options '{{function(get_job_options)}}'
+# Function that return different job options '_{{function(job_options_func)}}_'
 
-# Function that run the job with local $1 as args '{{function(run_job)}}'
+# Function that run the job with local $1 as args '_{{function(job_func)}}_'
 
 manage_cron_jobs() {
     while true; do
@@ -35,7 +35,7 @@ manage_cron_jobs() {
         echo "CRON_MANAGEMENT"
         echo "---------------"
         echo "0) Exit"
-        OPTIONS=$(get_job_options)
+        OPTIONS=$('_{{job_options_func.name}}_')
         echo "$OPTIONS" | awk '{print NR ") " $0}'
         echo -n "Select option: "
         read -r OPTION
@@ -62,7 +62,7 @@ manage_cron_jobs() {
             if [[ "$ANSWER" == "y" ]]; then
                 echo -n "Enter the frequency for the job (e.g., 1h, 30m, 1d): "
                 read -r FREQUENCY
-                CRON_FREQUENCY=$(get_cron_frequency "$FREQUENCY")
+                CRON_FREQUENCY=$('_{{freq2cron_func.name}}_' "$FREQUENCY")
                 (crontab -l 2>/dev/null; echo "$CRON_FREQUENCY $CRON_COMMAND") | crontab -
             fi
         fi
@@ -95,7 +95,7 @@ fi
 
 # Check if the script is executed with -e flag
 if [[ $SEND_OUTPUT -eq 1 ]]; then
-    OUTPUT=$(run_job "$JOB_ARG")
+    OUTPUT=$('_{{job_func.name}}_' "$JOB_ARG")
     NAME=$(hostname)
     URL_ENCODED_NAME=$(echo "$NAME" | sed -e 's/ /%20/g' -e 's/[^a-zA-Z0-9._-]/%&/g')
     curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/submit/$URL_ENCODED_NAME"
