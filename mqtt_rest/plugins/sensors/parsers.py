@@ -7,7 +7,7 @@ import re
 from typing import Dict
 
 
-def parse_sensors(output: str) -> Dict[str, float]:
+def parse_report(output: str) -> Dict[str, float]:
     groups = output.split("\n\n")
     sensors = {}
     for group in groups:

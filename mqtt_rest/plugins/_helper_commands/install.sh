@@ -40,6 +40,7 @@ if ! command -v '_{{ dependency.command }}_' &> /dev/null; then
     fi
     run_update_once
     # Function that install commands '_{{function(dependency.install_func, indent=1)}}_'
+    echo "Installing the '_{{ dependency.command }}_' package..."
     if ! '_{{dependency.install_func.name}}_'; then
         echo "Failed to install the '_{{ dependency.command }}_' package."
         exit 1
