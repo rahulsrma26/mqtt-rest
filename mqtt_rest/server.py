@@ -14,12 +14,12 @@ mqttclient = MQTTBroker()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Visit the API at", CONFIG.url + "/docs")
+    print("Visit the API at", CONFIG.url + "/docs", flush=True)
     if not mqttclient.connect():
         raise Exception("Failed to connect to MQTT Broker")
     db.add_source_device()
     yield
-    print("Cleaning up devices")
+    print("Cleaning up devices", flush=True)
     for device in db.all_devices.values():
         device.bulk_remove()
     db.remove_source_device()

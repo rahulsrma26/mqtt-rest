@@ -67,7 +67,7 @@ async def get_manager(request: Request):
 
 
 @router.put("/submit/{name}")
-async def submit(request: Request, name: str, expiry: int = 3600):
+async def submit(request: Request, name: str):
     global last_report
     device_name = get_device_name(name)
     last_report[device_name] = (await request.body()).decode()
@@ -79,7 +79,6 @@ async def submit(request: Request, name: str, expiry: int = 3600):
             name=device_name,
             model="mqtt-plugin",
             configuration_url=configuration_url,
-            expire_after=expiry,
         )
         for key, value in values.items():
             device.get_sensor(key, value, bulk=True, unit="°C")
