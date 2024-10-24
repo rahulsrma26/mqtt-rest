@@ -29,13 +29,14 @@ show_help() {
 
 # Function that run the job with local $1 as args '_{{function(job_func)}}_'
 
+OPTIONS=$('_{{job_options_func.name}}_')
+
 manage_cron_jobs() {
     while true; do
         echo "---------------"
         echo "CRON_MANAGEMENT"
         echo "---------------"
         echo "0) Exit"
-        OPTIONS=$('_{{job_options_func.name}}_')
         echo "$OPTIONS" | awk '{print NR ") " $0}'
         echo -n "Select option: "
         read -r OPTION
