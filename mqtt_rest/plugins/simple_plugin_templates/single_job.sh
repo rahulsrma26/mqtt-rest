@@ -10,6 +10,7 @@ fi
 COMMANDS_URL=$(dirname "'_{{url}}_'")
 PLUGIN_NAME=$(basename "$(dirname "$COMMANDS_URL")")
 CRON_COMMAND=$(realpath "$0")
+COMMAND_DIR=$(dirname "$0")
 
 # Function to display the help message
 show_help() {
@@ -60,9 +61,14 @@ fi
 # Check if the script is executed with -e flag
 if [[ $SEND_OUTPUT -eq 1 ]]; then
     OUTPUT=$('_{{job_func.name}}_')
+    echo "Output of the job:"
+    echo "$OUTPUT"
+    echo
+    echo "Sending the output to the server."
+    echo
     NAME=$(hostname)
     URL_ENCODED_NAME=$(echo "$NAME" | sed -e 's/ /%20/g' -e 's/[^a-zA-Z0-9._-]/%&/g')
-    curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/submit/$URL_ENCODED_NAME"
+    curl -X PUT -H "Content-Type: text/plain" -d "$OUTPUT" "$COMMANDS_URL/devices/$URL_ENCODED_NAME/submit"
     exit 0
 fi
 
@@ -102,5 +108,5 @@ fi
 
 if [[ $CRON_ADD -eq 1 ]]; then
     echo "Adding cron job to run the script every $FREQUENCY."
-    (crontab -l 2>/dev/null; echo "$CRON_FREQUENCY $CRON_COMMAND -e") | crontab -
+    (crontab -l 2>/dev/null; echo "$CRON_FREQUENCY /bin/bash $CRON_COMMAND -e > $COMMAND_DIR/logs.txt 2>&1") | crontab -
 fi

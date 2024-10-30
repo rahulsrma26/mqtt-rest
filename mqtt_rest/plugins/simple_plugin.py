@@ -1,20 +1,25 @@
 import abc
 import os
 import textwrap
-from typing import List
+from typing import Callable, Dict, List
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
-from mqtt_rest.plugins.template_engine import BashFunction, TemplateEngine
+from mqtt_rest.plugins.simple_template_engine import BashFunction, TemplateEngine
 
 THIS_DIR = os.path.dirname(__file__)
 
 helper_templates = TemplateEngine(
     os.path.join(
         THIS_DIR,
-        "_helper_commands",
+        "simple_plugin_templates",
     ),
 )
+
+
+def render(template_name: str, context: dict, **kwargs) -> str:
+    context.update(kwargs)
+    return helper_templates.render(template_name, context)
 
 
 class Command(BaseModel):
@@ -23,12 +28,11 @@ class Command(BaseModel):
 
 
 class Installer(BaseModel):
-    url: str
     dependencies: List[Command] | None = None
     description: str | None = None
 
-    def render(self):
-        return helper_templates.render("install.sh", self.model_dump())
+    def render(self, url: str):
+        return render("install.sh", self.model_dump(), url=url)
 
     @field_validator("description", mode="before")
     def update_description(cls, value):
@@ -38,26 +42,25 @@ class Installer(BaseModel):
 
 
 class BaseJob(BaseModel, abc.ABC):
-    url: str
     job_func: BashFunction
     freq2cron_func: BashFunction
     need_root: bool = False
 
     @abc.abstractmethod
-    def render(self):
+    def render(self, url: str):
         pass
 
 
 class SingleJob(BaseJob):
-    def render(self):
-        return helper_templates.render("single_job.sh", self.model_dump())
+    def render(self, url: str):
+        return render("single_job.sh", self.model_dump(), url=url)
 
 
 class MultiJob(BaseJob):
     job_options_func: BashFunction
 
-    def render(self):
-        return helper_templates.render("multi_job.sh", self.model_dump())
+    def render(self, url: str):
+        return render("multi_job.sh", self.model_dump(), url=url)
 
 
 def get_cron_frequency(freq: str):
@@ -90,3 +93,19 @@ def get_cron_frequency(freq: str):
 JOB_FREQUENCY_MINUTE_HOUR_DAY = get_cron_frequency("mhd")
 JOB_FREQUENCY_HOUR_DAY = get_cron_frequency("hd")
 JOB_FREQUENCY_DAY = get_cron_frequency("d")
+
+
+class SensorValue(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    value: bool | int | float | str
+    unit: str | None = None
+
+
+class SimplePlugin(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    install: Installer
+    manager: SingleJob | MultiJob
+    parser: Callable[[str], Dict[str, SensorValue]]

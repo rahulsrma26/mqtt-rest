@@ -7,7 +7,8 @@ from fastapi import Body, FastAPI, HTTPException
 from mqtt_rest import db
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 from mqtt_rest.mqtt import MQTTBroker
-from mqtt_rest.plugins import all_plugins
+from mqtt_rest.plugins.routes import plugin_names
+from mqtt_rest.plugins.routes import router as plugins_router
 
 mqttclient = MQTTBroker()
 
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     print("Visit the API at", CONFIG.url + "/docs", flush=True)
     if not mqttclient.connect():
         raise Exception("Failed to connect to MQTT Broker")
+    db.create_db_and_tables()
     db.add_source_device()
     yield
     print("Cleaning up devices", flush=True)
@@ -28,8 +30,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 lock = Lock()
-for plugin in all_plugins.values():
-    app.include_router(plugin, prefix="/api/v1/plugins")
+app.include_router(plugins_router, prefix="/api/v1")
 
 # origins = "*"
 # app.add_middleware(
@@ -87,4 +88,4 @@ async def delete_sensor(device_name: str, sensor_name: str):
 
 @app.get("/api/v1/plugins")
 async def get_plugins():
-    return list(all_plugins.keys())
+    return plugin_names

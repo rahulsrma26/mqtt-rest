@@ -1,5 +1,9 @@
 import logging
-from typing import Optional
+from typing import Annotated, Optional
+
+from fastapi import Depends
+from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel.pool import StaticPool
 
 from mqtt_rest.configs import SERVER_CONFIG as CONFIG
 from mqtt_rest.device import Device
@@ -9,6 +13,24 @@ SOURCE_DEVICE_NAME = "devices"
 all_devices = {}
 
 logger = logging.getLogger("uvicorn.error")
+
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
 
 
 def add_source_device():

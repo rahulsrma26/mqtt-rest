@@ -1,0 +1,7 @@
+Plugin: '_{{plugin}}_'
+Device: '_{{device}}_'
+Incoming IP: '_{{incoming_ip}}_'
+Time: '_{{updated_at}}_'
+
+==========[ Report ]==========
+'_{{result}}_'
