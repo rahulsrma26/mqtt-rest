@@ -4,7 +4,7 @@
 
 MQTT-REST is a project that bridges MQTT and RESTful APIs, allowing seamless communication between IoT devices using MQTT and web services using REST.
 
-It's useful if you want to monitor arbritary stuff from a machine in Home-assistant without writing custom integration.
+It's useful if you want to monitor arbritary stuff from a machine in Home-assistant without writing custom integration. Easiest way to install is to use the pypi hosted package [mqtt-rest](https://pypi.org/project/mqtt-rest/).
 
 ## Installation
 
